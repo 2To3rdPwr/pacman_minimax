@@ -125,58 +125,28 @@ class MultiAgentSearchAgent(Agent):
 # Problem 1b: implementing minimax
 
 class MinimaxAgent(MultiAgentSearchAgent):
-  """
-    Your minimax agent (problem 1)
-  """
 
   def getAction(self, gameState):
     """
       Returns the minimax action from the current gameState using self.depth
       and self.evaluationFunction. Terminal states can be found by one of the following:
       pacman won, pacman lost or there are no legal moves.
-
-      Here are some method calls that might be useful when implementing minimax.
-
-      gameState.getLegalActions(agentIndex):
-        Returns a list of legal actions for an agent
-        agentIndex=0 means Pacman, ghosts are >= 1
-
-      Directions.STOP:
-        The stop direction, which is always legal
-
-      gameState.generateSuccessor(agentIndex, action):
-        Returns the successor game state after an agent takes an action
-
-      gameState.getNumAgents():
-        Returns the total number of agents in the game
-
-      gameState.getScore():
-        Returns the score corresponding to the current state of the game
-
-      gameState.isWin():
-        Returns True if it's a winning state
-
-      gameState.isLose():
-        Returns True if it's a losing state
-
-      self.depth:
-        The depth to which search should continue
-
     """
     return self.minimax(gameState, self.depth, 0)
 
   def minimax(self, state, depth, player):
     """
-    @author: Jake Sage
-    :param state: gameState at the given node of the minimax tree
-    :param depth: How deep in the minimax tree we are currently
-    :param player: 0 = Pac-Man, 1+ = Ghosts
-    :return: While recurring, the score chosen by minimax at this node
-              At the tree root, return the action Pac-Man will take
+      Minimax adversarial search.
+      @author: Jake Sage
+      :param state: gameState at the given node of the minimax tree
+      :param depth: How deep in the minimax tree we are currently
+      :param player: 0 = Pac-Man, 1+ = Ghosts
+      :return: While recurring, the score chosen by minimax at this node
+                At the tree root, return the action Pac-Man will take
     """
     if depth == 0 or state.isWin() or state.isLose():
       # End States
-      return state.getScore()
+      return better(state)
     elif player == 0:
       # Pac-Man (Max Agent)
       maxAction = -1 * sys.maxint
@@ -209,18 +179,65 @@ class MinimaxAgent(MultiAgentSearchAgent):
 # Problem 2a: implementing alpha-beta
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
-  """
-    Your minimax agent with alpha-beta pruning (problem 2)
-  """
 
   def getAction(self, gameState):
     """
       Returns the minimax action using self.depth and self.evaluationFunction
     """
 
-    # BEGIN_YOUR_CODE (our solution is 49 lines of code, but don't worry if you deviate from this)
-    raise Exception("Not implemented yet")
-    # END_YOUR_CODE
+    return self.alphaBetaMinimax(gameState, self.depth, 0, -1 * sys.maxint, sys.maxint)
+
+  def alphaBetaMinimax(self, state, depth, player, alpha, beta):
+    """
+      @author: Jake Sage
+      Minimax using alpha-beta pruning.
+      alpha-beta pruning is an optimization of
+      minimax that eliminates entire branches of
+      the game state tree that will never be selected.
+      :param state: gameState at the given node of the minimax tree
+      :param depth: How deep in the minimax tree we are currently
+      :param player: 0 = Pac-Man, 1+ = Ghosts
+      :param alpha: the highest value Pac-Man can achieve at the given level or above
+      :param beta: the lowest value the ghosts can achieve at the given level or above
+      :return: While recurring, the score chosen by minimax at this node
+                At the tree root, return the action Pac-Man will take
+    """
+    if depth == 0 or state.isWin() or state.isLose():
+      # End States
+      return better(state)
+    elif player == 0:
+      # Pac-Man (Max Agent)
+      maxAction = -1 * sys.maxint
+      actions = state.getLegalActions(player)
+      for action in actions:
+        result = self.alphaBetaMinimax(state.generateSuccessor(player, action), depth, player + 1, alpha, beta)
+        if maxAction == result:  # randomize result of ties to help break up thrashing
+          bestAction = random.choice([bestAction, action])
+        elif maxAction < result:
+          maxAction = result
+          bestAction = action
+        alpha = max(alpha, maxAction)
+        if beta <= alpha:
+          break
+      if depth == self.depth:
+        return bestAction
+      else:
+        return maxAction
+    else:
+      # Ghosts (Min Agent)
+      minAction = sys.maxint
+      actions = state.getLegalActions(player)
+      for action in actions:
+        if player + 1 < state.getNumAgents():
+          result = self.alphaBetaMinimax(state.generateSuccessor(player, action), depth, player + 1, alpha, beta)
+        else:
+          result = self.alphaBetaMinimax(state.generateSuccessor(player, action), depth - 1, 0, alpha, beta)
+        if minAction > result:
+          minAction = result
+        beta = min(beta, minAction)
+        if beta <= alpha:
+          break
+      return minAction
 
 ######################################################################################
 # Problem 3b: implementing expectimax
@@ -245,16 +262,58 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
 ######################################################################################
 # Problem 4a (extra credit): creating a better evaluation function
 
-def betterEvaluationFunction(currentGameState):
+def intersectionEvaluationFunction(state):
   """
-    Your extreme, unstoppable evaluation function (problem 4).
-
-    DESCRIPTION: <write something here so we know what you did>
+    @author: Jake Sage
+    Evaluation function that attempts to take the safety of
+    intersections into account. This tries to ensure that
+    Pac-Man is the closest player to at least one intersection.
+    This is meant to keep Pac-Man in situations where it always
+    has an escape route, but reliance on manhattan distance
+    and the fact that the rule that Pac-Man may not enter the
+    Ghost House is not enforced in this implementation means
+    this is better in theory than in practice.
   """
+  pacmanPosition = state.getPacmanPosition()
 
-  # BEGIN_YOUR_CODE (our solution is 15 lines of code, but don't worry if you deviate from this)
-  raise Exception("Not implemented yet")
-  # END_YOUR_CODE
+  unsafeIntersectionPenalty = -1000
+  for intersection in state.getIntersections():
+    intersectionIsSafe = True
+    pacmanDistance = manhattanDistance(pacmanPosition, intersection)
+    for ghost in state.getGhostPositions():
+      ghostDistance = manhattanDistance(ghost, intersection)
+      if ghostDistance < pacmanDistance + 2:
+        intersectionIsSafe = False
+        break
+    if(intersectionIsSafe):
+      unsafeIntersectionPenalty = 0
+      break
+  return unsafeIntersectionPenalty
+
+def foodEvaluationFunction(state):
+  """
+    @author: Jake Sage
+    Pretty simple. Apply a penalty for being far away
+    from food. This lets Pac-Man work towards food
+    that isn't immediately visible within the depth
+    it searches.
+  """
+  pacmanPosition = state.getPacmanPosition()
+  foodPenalty = 0
+  foodPositions = state.getFood()
+  for x in range(state.data.layout.width):
+    for y in range(state.data.layout.height):
+      if(foodPositions[x][y]):
+        foodPenalty += manhattanDistance(pacmanPosition, [x, y])
+
+  return -1 * (foodPenalty / 4)
+
+def betterEvaluationFunction(state):
+  """
+    @author: Jake Sage
+    aggregate of all my evaluation functions
+  """
+  return state.getScore() + foodEvaluationFunction(state) + intersectionEvaluationFunction(state)
 
 # Abbreviation
 better = betterEvaluationFunction
