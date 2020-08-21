@@ -121,9 +121,6 @@ class MultiAgentSearchAgent(Agent):
     self.evaluationFunction = util.lookup(evalFn, globals())
     self.depth = int(depth)
 
-######################################################################################
-# Problem 1b: implementing minimax
-
 class MinimaxAgent(MultiAgentSearchAgent):
 
   def getAction(self, gameState):
@@ -175,16 +172,12 @@ class MinimaxAgent(MultiAgentSearchAgent):
           minAction = result
       return minAction
 
-######################################################################################
-# Problem 2a: implementing alpha-beta
-
 class AlphaBetaAgent(MultiAgentSearchAgent):
 
   def getAction(self, gameState):
     """
       Returns the minimax action using self.depth and self.evaluationFunction
     """
-
     return self.alphaBetaMinimax(gameState, self.depth, 0, -1 * sys.maxint, sys.maxint)
 
   def alphaBetaMinimax(self, state, depth, player, alpha, beta):
@@ -239,13 +232,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
           break
       return minAction
 
-######################################################################################
-# Problem 3b: implementing expectimax
-
 class ExpectimaxAgent(MultiAgentSearchAgent):
-  """
-    Your expectimax agent (problem 3)
-  """
 
   def getAction(self, gameState):
     """
@@ -254,13 +241,47 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
       All ghosts should be modeled as choosing uniformly at random from their
       legal moves.
     """
+    return self.expectimax(gameState, self.depth, 0)
 
-    # BEGIN_YOUR_CODE (our solution is 25 lines of code, but don't worry if you deviate from this)
-    raise Exception("Not implemented yet")
-    # END_YOUR_CODE
-
-######################################################################################
-# Problem 4a (extra credit): creating a better evaluation function
+  def expectimax(self, state, depth, player):
+    """
+      expectimax adversarial search.
+      @author: Jake Sage
+      :param state: gameState at the given node of the minimax tree
+      :param depth: How deep in the minimax tree we are currently
+      :param player: 0 = Pac-Man, 1+ = Ghosts
+      :return: While recurring, the score chosen by minimax at this node
+                At the tree root, return the action Pac-Man will take
+    """
+    if depth == 0 or state.isWin() or state.isLose():
+      # End States
+      return better(state)
+    elif player == 0:
+      # Pac-Man (Max Agent)
+      maxAction = -1 * sys.maxint
+      actions = state.getLegalActions(player)
+      for action in actions:
+        result = self.expectimax(state.generateSuccessor(player, action), depth, player + 1)
+        if maxAction == result:     # randomize result of ties to help break up thrashing
+          bestAction = random.choice([bestAction, action])
+        elif maxAction < result:
+          maxAction = result
+          bestAction = action
+      if depth == self.depth:
+        return bestAction
+      else:
+        return maxAction
+    else:
+      # Ghosts (random Agent)
+      avgAction = 0
+      actions = state.getLegalActions(player)
+      print(actions)
+      for action in actions:
+        if player + 1 < state.getNumAgents():
+          avgAction += (1 / len(actions)) * self.expectimax(state.generateSuccessor(player, action), depth, player + 1)
+        else:
+          avgAction += (1 / len(actions)) * self.expectimax(state.generateSuccessor(player, action), depth - 1, 0)
+      return avgAction
 
 def intersectionEvaluationFunction(state):
   """
