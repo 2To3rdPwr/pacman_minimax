@@ -27,7 +27,7 @@ with the following commands
   * Which type of agent is used to control Pac-Man (Dafault Keyboard)
     * ReflexAgent
     * MinimaxAgent (mine)
-    * AlphaBetaAgent (Not Implemented)
+    * AlphaBetaAgent (mine)
     * ExpectimaxAgent (Not Implemented)
 * ```-q```
   * Prevent rendering and output to console only
