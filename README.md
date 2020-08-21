@@ -26,9 +26,9 @@ with the following commands
 * ```-p AGENT```
   * Which type of agent is used to control Pac-Man (Dafault Keyboard)
     * ReflexAgent
-    * MinimaxAgent (mine)
-    * AlphaBetaAgent (mine)
-    * ExpectimaxAgent (Not Implemented)
+    * MinimaxAgent
+    * AlphaBetaAgent
+    * ExpectimaxAgent
 * ```-q```
   * Prevent rendering and output to console only
 * ```-k NUMGHOSTS```
@@ -39,4 +39,7 @@ with the following commands
     * DirectionalGhost
 
 ### My Code
-* [Minimax](https://github.com/2To3rdPwr/pacman_minimax/blob/797fde4c788f45ad3c0c17db187c0c50e001e246/submission.py#L168)
+* [Minimax](https://github.com/2To3rdPwr/pacman_minimax/blob/master/submission.py#L134)
+* [alpha-beta pruning](https://github.com/2To3rdPwr/pacman_minimax/blob/master/submission.py#L183)
+* [Expectimax](https://github.com/2To3rdPwr/pacman_minimax/blob/master/submission.py#L246)
+* [Custom evaluation functions](https://github.com/2To3rdPwr/pacman_minimax/blob/master/submission.py#L332)
